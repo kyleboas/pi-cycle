@@ -1,0 +1,13 @@
+{
+  "name": "pi-cycle",
+  "version": "1.0.0",
+  "description": "pi extension for cycling between model tiers",
+  "main": "pi-cycle.ts",
+  "keywords": [
+    "pi",
+    "extension",
+    "ai"
+  ],
+  "author": "Kyle Boas",
+  "license": "MIT"
+}
