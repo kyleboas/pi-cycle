@@ -14,11 +14,11 @@ interface Config {
 
 const DEFAULT_CONFIG: Config = {
   tiers: {
-    1: ["anthropic/claude-haiku-4-5"],
-    2: ["anthropic/claude-sonnet-4-5"],
-    3: ["anthropic/claude-opus-4-6"],
+    1: ["anthropic/claude-opus-4-6"],
+    2: ["anthropic/claude-sonnet-4-6"],
+    3: ["anthropic/claude-haiku-4-5"],
   },
-};
+}; 
 
 export default function (pi: ExtensionAPI) {
   const configPath = join(homedir(), ".pi", "agent", "pi-cycle.json");
