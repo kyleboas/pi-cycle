@@ -5,6 +5,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 
 interface Config {
+  shortcut: string;
   tiers: {
     1: string[];
     2: string[];
@@ -13,6 +14,7 @@ interface Config {
 }
 
 const DEFAULT_CONFIG: Config = {
+  shortcut: "z",
   tiers: {
     1: ["anthropic/claude-opus-4-6"],
     2: ["anthropic/claude-sonnet-4-6"],
@@ -28,6 +30,10 @@ export default function (pi: ExtensionAPI) {
   function normalizeConfig(raw: unknown): Config {
     const input = raw as Partial<Config> & { tiers?: Record<string, string | string[]> };
     const result: Config = structuredClone(DEFAULT_CONFIG);
+
+    if (typeof input?.shortcut === "string" && input.shortcut.trim().length > 0) {
+      result.shortcut = input.shortcut.trim();
+    }
 
     for (const tier of [1, 2, 3] as const) {
       const value = input?.tiers?.[String(tier)] ?? input?.tiers?.[tier];
@@ -135,10 +141,12 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("input", async (event, ctx) => {
-    const match = event.text.match(/^(z{1,3})(?:\s+(.*)|$)/s);
+    const escaped = config.shortcut.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = event.text.match(new RegExp(`^((?:${escaped}){1,3})(?:\\s+([\\s\\S]*)|$)`));
+    if (match && match[1].length % config.shortcut.length !== 0) return;
     if (!match) return;
 
-    const tier = match[1].length as 1 | 2 | 3;
+    const tier = (match[1].length / config.shortcut.length) as 1 | 2 | 3;
     const body = (match[2] || "").trim();
     const modelsForTier = config.tiers[tier];
 
@@ -172,10 +180,13 @@ export default function (pi: ExtensionAPI) {
   pi.registerCommand("cycle-models", {
     description: "Configure one or more models for each pi-cycle tier",
     getArgumentCompletions: (prefix) => {
-      const values = ["1", "2", "3", "show"];
+      const values = ["1", "2", "3", "show", "shortcut"];
       return values
         .filter((value) => value.startsWith(prefix.trim()))
-        .map((value) => ({ value, label: value === "show" ? "show current tier mappings" : `configure tier ${value}` }));
+        .map((value) => ({
+          value,
+          label: value === "show" ? "show current tier mappings" : value === "shortcut" ? "set shortcut key" : `configure tier ${value}`,
+        }));
     },
     handler: async (args, ctx) => {
       const trimmed = args.trim();
@@ -190,8 +201,20 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
+      if (trimmed.startsWith("shortcut ")) {
+        const newShortcut = trimmed.slice("shortcut ".length).trim();
+        if (!newShortcut) {
+          ctx.ui.notify("Usage: /cycle-models shortcut {shortcut}", "error");
+          return;
+        }
+        config.shortcut = newShortcut;
+        await saveConfig();
+        ctx.ui.notify(`Shortcut set to "${newShortcut}" — use ${newShortcut}, ${newShortcut.repeat(2)}, ${newShortcut.repeat(3)} to switch tiers`, "success");
+        return;
+      }
+
       if (trimmed) {
-        ctx.ui.notify("Usage: /cycle-models | /cycle-models <1|2|3> | /cycle-models show", "error");
+        ctx.ui.notify("Usage: /cycle-models | /cycle-models <1|2|3> | /cycle-models show | /cycle-models shortcut {shortcut}", "error");
         return;
       }
 

@@ -15,6 +15,7 @@ A pi extension for quickly cycling between model tiers using keyboard shortcuts.
 - `zzz <message>`: Switch to Tier 3 and send message.
 - `/cycle-models show`: Show current tier mappings.
 - `/cycle-models <1|2|3>`: Configure models for a specific tier.
+- `/cycle-models shortcut {shortcut}`: Change the prefix shortcut (default: `z`).
 - `/cycle-models`: Configure all tiers.
 
 ## Installation
