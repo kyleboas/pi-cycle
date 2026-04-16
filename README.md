@@ -20,3 +20,7 @@ A pi extension for quickly cycling between model tiers using keyboard shortcuts.
 ## Installation
 
 Copy `pi-cycle.ts` to your `~/.pi/agent/extensions/` directory.
+
+## License
+
+MIT
